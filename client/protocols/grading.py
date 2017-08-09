@@ -10,6 +10,10 @@ from client.utils import format
 from client.utils import storage
 import logging
 import sys
+import os
+from shutil import copyfile
+import json
+import requests
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +73,62 @@ def grade(questions, messages, env=None, verbose=True):
         failed += results['failed']
         locked += results['locked']
         analytics[test.name] = results
+
+        current_directory = os.getcwd()
+
+        if (not failed and not locked):
+
+            with open(current_directory + '/hw02.ok') as data_file:
+                data = json.load(data_file)
+
+            endpoint = data["endpoint"]
+            question = test.name
+
+            right_sub_list = os.listdir(current_directory + "/submissions/right_submissions")
+            count_of_right_subs = len(right_sub_list)
+
+            wrong_sub_list = os.listdir(
+                current_directory + "/submissions/wrong_submissions")
+            count_of_wrong_subs = len(wrong_sub_list)
+
+            #Save correct submission
+            copyfile(current_directory + "/hw02.py",
+                    current_directory + "/submissions/right_submissions/right_sub" + str(
+                    count_of_right_subs + 1) + ".py")
+
+            with open(current_directory + "/submissions/right_submissions/right_sub" + str(
+                    count_of_right_subs + 1)  + ".py", 'r') as myfile:
+                right_sub = myfile.read()
+
+            correctCode = right_sub
+
+            incorrectCode = ""
+            try:
+                #Save wrong submission
+                with open(current_directory + "/submissions/wrong_submissions/wrong_sub" + str(
+                        count_of_wrong_subs) + ".py", 'r') as myfile:
+                    wrong_sub = myfile.read()
+                incorrectCode = wrong_sub
+
+            except FileNotFoundError:
+                    print( "---------------------------------------------------------------------\nYou got it in your first try, congrats!")
+
+            # Send submissions to refazer server
+            refazerObj = {"EndPoint": endpoint, "Question": question, "IncorrectCode": incorrectCode,
+                "CorrectCode": correctCode}
+
+            jsonRefazer = json.dumps(refazerObj)
+            headers = {'Content-Type': 'application/json'}
+            requests.post("http://refazer-online.azurewebsites.net/api/examples", data=jsonRefazer, headers=headers).content
+
+        else:
+            sub_list = os.listdir(current_directory + "/submissions/wrong_submissions")
+            count_of_subs = len(sub_list)
+
+            copyfile(current_directory + "/hw02.py",
+                    current_directory + "/submissions/wrong_submissions/wrong_sub" + str(
+                    count_of_subs + 1) + ".py")
+
 
         if not verbose and (failed > 0 or locked > 0):
             # Stop at the first failed test
