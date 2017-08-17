@@ -76,6 +76,11 @@ def grade(questions, messages, env=None, verbose=True):
 
         current_directory = os.getcwd()
 
+        if not os.path.exists(current_directory + "/submissions"):            
+            os.makedirs(current_directory + "/submissions")           
+            os.makedirs(current_directory + "/submissions/right_submissions")            
+            os.makedirs(current_directory + "/submissions/wrong_submissions")
+        
         if (not failed and not locked):
 
             with open(current_directory + '/hw02.ok') as data_file:
