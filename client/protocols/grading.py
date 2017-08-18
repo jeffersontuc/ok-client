@@ -50,12 +50,74 @@ class GradingProtocol(models.Protocol):
         grade(tests, messages, env, verbose=self.args.verbose)
 
 
+
+def saveRightSub(directory, counter, file):
+
+    createSubmission(directory,counter,"right")
+
+    with open(directory + "/submissions/right_submissions/right_sub" + str(counter + 1)  + ".py", 'r') as file:
+        right_sub = file.read()
+
+    correctCode = right_sub
+
+    return correctCode
+
+
+def saveWrongSub(directory, counter, file):
+
+    with open(directory + "/submissions/wrong_submissions/wrong_sub" + str(counter) + ".py", 'r') as file:
+        wrong_sub = file.read()
+
+    incorrectCode = wrong_sub
+
+    return incorrectCode
+
+def createSubmission(directory, counter, flag):
+    """
+    >>> createSubmission("C:/Users/Tiago/Desktop/projeto LES/ok-client/demo/ok_test", 1, "right")
+
+    >>> createSubmission("C:/Users/Tiago/Desktop/projeto LES/ok-client/demo/ok_test", 3, "wrong")
+
+    >>> createSubmission("C:/Users/Tiago/Desktop/projeto LES/ok-client/demo/ok_test", 5000, "right")
+
+    """
+    if flag == "right":
+        copyfile(directory + "/hw02.py",
+        directory + "/submissions/right_submissions/right_sub" + str(counter + 1) + ".py")
+
+    elif flag == "wrong":
+        copyfile(directory + "/hw02.py",
+        directory + "/submissions/wrong_submissions/wrong_sub" + str(counter + 1) + ".py")
+
+    else:
+        return print("Nenhum arquivo foi criado")
+
+    return
+
+
+def createSubmissionDirectory(directory):
+
+    """
+    >>> createSubmissionDirectory("C:/Users/Tiago/Desktop/projeto LES/ok-client/demo/ok_test")
+
+    """
+
+    os.makedirs(directory + "/submissions")
+    os.makedirs(directory + "/submissions/right_submissions")
+    os.makedirs(directory + "/submissions/wrong_submissions")
+
+    if not os.path.exists(directory + "/submissions"):
+        return print("Nenhum diretório pode ser criado")
+
+    return
+
+
 def grade(questions, messages, env=None, verbose=True):
     format.print_line('~')
     print('Running tests')
     print()
     passed = 0
-    failed = 0
+    faiFled = 0
     locked = 0
 
     analytics = {}
@@ -76,11 +138,9 @@ def grade(questions, messages, env=None, verbose=True):
 
         current_directory = os.getcwd()
 
-        if not os.path.exists(current_directory + "/submissions"):            
-            os.makedirs(current_directory + "/submissions")           
-            os.makedirs(current_directory + "/submissions/right_submissions")            
-            os.makedirs(current_directory + "/submissions/wrong_submissions")
-        
+        if not os.path.exists(current_directory + "/submissions"):
+            createSubmissionDirectory(current_directory);
+
         if (not failed and not locked):
 
             with open(current_directory + '/hw02.ok') as data_file:
@@ -92,28 +152,22 @@ def grade(questions, messages, env=None, verbose=True):
             right_sub_list = os.listdir(current_directory + "/submissions/right_submissions")
             count_of_right_subs = len(right_sub_list)
 
+
+
             wrong_sub_list = os.listdir(
                 current_directory + "/submissions/wrong_submissions")
             count_of_wrong_subs = len(wrong_sub_list)
 
             #Save correct submission
-            copyfile(current_directory + "/hw02.py",
-                    current_directory + "/submissions/right_submissions/right_sub" + str(
-                    count_of_right_subs + 1) + ".py")
-
-            with open(current_directory + "/submissions/right_submissions/right_sub" + str(
-                    count_of_right_subs + 1)  + ".py", 'r') as myfile:
-                right_sub = myfile.read()
-
-            correctCode = right_sub
+            correctCode = saveRightSub(current_directory, count_of_right_subs, myfile)
 
             incorrectCode = ""
+
+
             try:
                 #Save wrong submission
-                with open(current_directory + "/submissions/wrong_submissions/wrong_sub" + str(
-                        count_of_wrong_subs) + ".py", 'r') as myfile:
-                    wrong_sub = myfile.read()
-                incorrectCode = wrong_sub
+                incorrectCode = saveWrongSub(current_directory, count_of_wrong_subs, myfile)
+
 
             except FileNotFoundError:
                     print( "---------------------------------------------------------------------\nYou got it in your first try, congrats!")
@@ -130,10 +184,7 @@ def grade(questions, messages, env=None, verbose=True):
             sub_list = os.listdir(current_directory + "/submissions/wrong_submissions")
             count_of_subs = len(sub_list)
 
-            copyfile(current_directory + "/hw02.py",
-                    current_directory + "/submissions/wrong_submissions/wrong_sub" + str(
-                    count_of_subs + 1) + ".py")
-
+            createSubmission(current_directory, count_of_subs, "wrong")
 
         if not verbose and (failed > 0 or locked > 0):
             # Stop at the first failed test
